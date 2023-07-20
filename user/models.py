@@ -1,6 +1,7 @@
 from multiprocessing.managers import BaseManager
 
 from django.contrib.auth.base_user import BaseUserManager
+from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -10,20 +11,20 @@ from django.utils.translation import gettext_lazy as _
 
 class UserManager(BaseUserManager):
 
-    def create_user(self, firstname, lastname, phone_number, password, **extra_fields):
-        if not firstname:
-            raise ValueError(_('firstname is required'))
-        if not lastname:
-            raise ValueError(_('lastname is required'))
+    def create_user(self, first_name, last_name, phone_number, password, **extra_fields):
+        if not first_name:
+            raise ValueError(_('first_name is required'))
+        if not last_name:
+            raise ValueError(_('last_name is required'))
         if not phone_number:
             raise ValueError(_('phone_number is required'))
-        user = self.model(phone_number=phone_number, firstname=firstname, lastname=lastname, **extra_fields)
+        user = self.model(phone_number=phone_number, first_name=first_name, last_name=last_name, **extra_fields)
         if not password:
             raise ValueError(_('password is required'))
         user.set_password(password)
-        user.save()
+        user.save(using=self._db)
         return user
-    def create_superuser(self  ,firstname , lastname , phone_number , password , **extra_fields):
+    def create_superuser(self  ,first_name , last_name , phone_number , password , **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -32,21 +33,21 @@ class UserManager(BaseUserManager):
             raise ValueError(_('Superuser must have is_staff=True.'))
         if extra_fields.get('is_superuser') is not True:
             raise ValueError(_('Superuser must have is_superuser=True.'))
-        return self.create_user(firstname, lastname, phone_number, password, **extra_fields)
+        return self.create_user(first_name, last_name, phone_number, password, **extra_fields)
 
 
-
-class User(models.Model):
-    firstname = models.CharField(max_length=100 , verbose_name="user's firstname")
-    lastname = models.CharField(max_length=100 , verbose_name="user's lastname")
-    phone_number = models.CharField(max_length=13 , verbose_name="user's phone_number")
-    password = models.CharField(max_length=64  , verbose_name="user's password")
+#TODO: add validation for fields and add image filed too with minIo
+class Profile(AbstractUser):
+    first_name = models.CharField(max_length=100 , verbose_name="user's firstname")
+    last_name = models.CharField(max_length=100 , verbose_name="user's lastname")
+    phone_number = models.CharField(max_length=13 , verbose_name="user's phone_number" , unique=True)
+    password = models.CharField(max_length=128  , verbose_name="user's password")
 
 
 
     username = None
     USERNAME_FIELD  = 'phone_number'
-    REQUIRED_FIELEDS = ['firstname' , 'lastname' , 'password']
+    REQUIRED_FIELDS = ['first_name' , 'last_name' , 'password']
 
     objects = UserManager()
 
