@@ -1,0 +1,75 @@
+#version: '3.9'
+#x-minio-common: &minio-common
+#  image: quay.io/minio/minio:latest
+#  command: server --console-address ":9090" /minio/data
+#  ports:
+#    - "9080:9000"
+#    - "9090:9000"
+#
+#
+#services:
+#  minio:
+#    <<: *minio-common
+#    hostname: minio
+#    volumes:
+#      - type: bind
+#        source: /mnt/data/compose
+#        target: /mnt/data/
+#      - type: bind
+#        source: /etc/default/minio
+#        target: /etc/config.env
+version: '3.9'
+
+services:
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: hamid14520
+      POSTGRES_DB: todolist
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  minio:
+    image: minio/minio:latest
+    command: server /data
+    volumes:
+      - minio-data:/data
+    environment:
+      MINIO_ACCESS_KEY: myaccesskey
+      MINIO_SECRET_KEY: mysecretkey
+      MINIO_ROOT_USER: miniouser
+      MINIO_ROOT_PASSWORD: miniouser
+    ports:
+      - "9002:9002"
+      - "9003:9003"
+
+
+  createbuckets:
+    image: minio/mc
+    depends_on:
+      - minio
+    env_file:
+      - .env
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc config host add myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb --quiet myminio/photos;
+      /usr/bin/mc policy set none myminio/photos;
+      "
+
+  backend:
+    build: .
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - minio
+
+volumes:
+  db-data:
+  minio-data:

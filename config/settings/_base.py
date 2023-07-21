@@ -22,6 +22,7 @@ load_dotenv(os.path.join(BASE_DIR / '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+print(os.getenv("PRODUCTION_MODE"))
 PRODUCTION_MODE = bool(int((os.getenv('PRODUCTION_MODE'))))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY', '')
@@ -38,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'storages',
     'django_filters',
     'rest_framework_simplejwt',
     'todo',
@@ -126,3 +128,8 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3BotoStorage'
+AWS_ACCESS_KEY_ID = 'access_key'
+AWS_SECRET_ACCESS_KEY = 'secret_key'
+AWS_STORAGE_BUCKET_NAME = 'static'
+AWS_S3_ENDPOINT_URL = 'http://minio:9000'
